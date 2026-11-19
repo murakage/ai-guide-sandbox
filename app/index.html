@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ハコニワ Studio (ダミー)</title>
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  /* ダミーアプリの見た目。中身は動かない (画面の再現と「AI に聞く」を試すためだけ) */
+  body { line-height: 1.5; }
+  .bar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--soft); }
+  .bar .title { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar .title small { font-weight: 400; color: var(--muted); margin-left: 8px; }
+  .icon { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+          font: inherit; font-weight: 700; cursor: pointer; display: grid; place-items: center; text-decoration: none; flex-shrink: 0; }
+  .icon:hover { border-color: var(--accent); }
+  .btn { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; text-decoration: none; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  .banner { font-size: 13px; color: var(--muted); text-align: center; padding: 4px; background: var(--accent-soft); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .thumb { height: 110px; background: linear-gradient(135deg, #c9b8ff, #8fd3ff); }
+  .card .body { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.pub { color: #1a7f37; border-color: #1a7f37; }
+  .badge.pass { color: #9a6700; border-color: #9a6700; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .editor { display: grid; grid-template-columns: 220px 1fr 240px; gap: 12px; }
+  .panel { border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  .panel h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+  .asset { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; font-size: 14px; }
+  .asset.sel { background: var(--accent-soft); }
+  .stage { aspect-ratio: 16 / 10; border-radius: 10px; background: #e9e4da; position: relative; overflow: hidden; }
+  .wall { position: absolute; top: 12%; height: 50%; background: #f7f3ea; border: 1px solid #d6cfc0; }
+  .frame { position: absolute; border: 3px solid #6b5b45; }
+  .frame.photo { background: linear-gradient(135deg, #ffd29d, #ff9db0); }
+  .frame.video { background: #9a9a9a; display: grid; place-items: center; color: #fff; font-size: 12px; border-color: #777; }
+  .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 38%; background: #cdbfa6; }
+  label.opt { display: flex; gap: 8px; align-items: flex-start; padding: 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; }
+  label.opt.off { opacity: .5; }
+  input[type=text], textarea { font: inherit; width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+  .help { font-size: 13px; color: var(--muted); }
+
+  /* 「?」で開くダイアログ */
+  dialog { border: 1px solid var(--line); border-radius: 14px; padding: 0; width: min(560px, calc(100% - 32px)); background: var(--bg); color: var(--fg); }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .dlg-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .dlg-head h2 { margin: 0; font-size: 17px; }
+  .dlg-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 16px; max-height: 75vh; overflow-y: auto; }
+  .sec h3 { margin: 0 0 6px; font-size: 14px; }
+  .tours { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+  .tours span { padding: 6px 10px; border: 1px dashed var(--line); border-radius: 6px; color: var(--muted); }
+  .ais { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  details pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; margin: 6px 0 0; }
+  @media (max-width: 760px) { .editor { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="banner">これは「AI に聞く」を試すための <b>ダミーのアプリ</b> です。ボタンの多くは動きません。</div>
+<header class="bar">
+  <a class="icon" href="#/works" title="作品一覧へ" aria-label="作品一覧へ">🏠</a>
+  <div class="title" id="title"></div>
+  <span id="actions" class="row"></span>
+  <!-- どの画面でもヘッダー右端に置く「?」。困ったときに探す先を 1 か所に決める -->
+  <button class="icon" id="help" title="使い方ガイド・AI に聞く" aria-label="使い方ガイド・AI に聞く">?</button>
+  <a class="icon" href="#/account" title="アカウント" aria-label="アカウント">👤</a>
+</header>
+<main class="wrap" id="view"></main>
+
+<dialog id="dlg">
+  <div class="dlg-head"><h2 id="dlg-title">使い方ガイド</h2><button class="icon" id="dlg-close" aria-label="閉じる">✕</button></div>
+  <div class="dlg-body">
+    <section class="sec">
+      <h3>📖 この画面のガイド</h3>
+      <a id="guide-link" target="_blank" rel="noopener"></a>
+    </section>
+    <section class="sec">
+      <h3>🧭 ツアー (画面の上で案内)</h3>
+      <div class="tours" id="tours"></div>
+    </section>
+    <section class="sec">
+      <h3>✨ AI に聞く</h3>
+      <textarea id="trouble" rows="3" placeholder="困っていることを書いてください (例: アップロードした動画がプレビューに出ない)"></textarea>
+      <div class="ais" id="ais"></div>
+      <p class="help">選んだ AI が新しいタブで開き、下の文が入った状態になります。送られるのは <b>画面の名前・ガイドの URL・あなたが書いた文だけ</b> で、作品名などは自動では入りません。</p>
+      <details><summary>AI に送る文を見る</summary><pre id="preview"></pre></details>
+    </section>
+  </div>
+</dialog>
+
+<script type="module">
+import { AIS, appPrompt, openInAi, guideUrl } from '../assets/ask-ai.js';
+
+// ダミーのデータ
+const WORKS = [
+  { id: 'w1', name: '春の写真展', shape: '正方形', vis: '全体公開' },
+  { id: 'w2', name: '新作の映像ギャラリー', shape: '横長', vis: 'パス限定' },
+  { id: 'w3', name: '下書きの部屋', shape: 'L 字', vis: '非公開' },
+];
+// 画面 → その画面のガイド。アプリ側が持つ対応表はこれだけ
+const SCREENS = {
+  works:   { name: '作品一覧画面',  page: 'works-list',      tours: ['展示ルームを作りたい', '展示ルームを削除したい', 'ゴミ箱から戻したい'] },
+  editor:  { name: '編集画面',      page: 'editor',          tours: ['写真や動画を飾りたい', 'プレビューで確かめたい'] },
+  publish: { name: '公開設定画面',  page: 'publish',         tours: ['パス限定で共有したい', '全体公開したい'] },
+  account: { name: 'アカウント画面', page: 'getting-started', tours: ['表示名を決めたい'] },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+let current = 'works';
+
+function route() {
+  const h = location.hash || '#/works';
+  let m;
+  if ((m = h.match(/^#\/works\/(\w+)\/editor/))) return editor(WORKS.find((w) => w.id === m[1]) ?? WORKS[0]);
+  if ((m = h.match(/^#\/works\/(\w+)\/publish/))) return publish(WORKS.find((w) => w.id === m[1]) ?? WORKS[0]);
+  if (h.startsWith('#/account')) return account();
+  return works();
+}
+
+function setScreen(key, title, actions = '') {
+  current = key;
+  $('title').innerHTML = `ハコニワ Studio<small>${esc(title)}</small>`;
+  $('actions').innerHTML = actions;
+}
+
+function works() {
+  setScreen('works', '作品一覧', '<button class="btn primary">＋ 新しい展示ルーム</button>');
+  const cls = { 全体公開: 'pub', パス限定: 'pass' };
+  $('view').innerHTML = `
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <input type="text" placeholder="検索 ( / )" style="max-width:260px">
+      <span class="help">3 / 30 個 (フリープラン)　🗑 ゴミ箱</span>
+    </div>
+    <div class="grid">${WORKS.map((w) => `
+      <div class="card"><div class="thumb"></div><div class="body">
+        <b>${esc(w.name)}</b>
+        <div class="row"><span class="badge">${w.shape}</span><span class="badge ${cls[w.vis] ?? ''}">${w.vis}</span></div>
+        <div class="row"><a class="btn" href="#/works/${w.id}/editor">編集</a><a class="btn" href="#/works/${w.id}/publish">公開設定</a><span class="btn">⋯</span></div>
+      </div></div>`).join('')}
+    </div>`;
+}
+
+function editor(w) {
+  setScreen('editor', `編集: ${w.name}`, `<span class="help">保存済み</span><a class="btn" href="#/works/${w.id}/publish">公開設定</a>`);
+  $('view').innerHTML = `
+    <div class="editor">
+      <div class="panel"><h3>素材</h3>
+        <div class="asset">🖼 sakura.jpg</div>
+        <div class="asset">🖼 river.png</div>
+        <div class="asset sel">🎞 opening.mp4 <span title="変換中">⏳</span></div>
+        <div class="asset">🎞 old-clip.avi <span title="変換に失敗">🔺</span></div>
+        <button class="btn" style="margin-top:8px;width:100%">＋ アップロード</button>
+      </div>
+      <div class="panel"><h3>プレビュー</h3>
+        <div class="stage">
+          <div class="wall" style="left:6%;width:88%"></div>
+          <div class="frame photo" style="left:14%;top:22%;width:18%;height:26%"></div>
+          <div class="frame photo" style="left:38%;top:20%;width:16%;height:30%"></div>
+          <div class="frame video" style="left:62%;top:22%;width:24%;height:26%">変換中</div>
+          <div class="floor"></div>
+        </div>
+        <p class="help">Shift+P でプレビュー、Alt+G でグリッド</p>
+      </div>
+      <div class="panel"><h3>設定 (opening.mp4)</h3>
+        <label class="opt"><input type="checkbox" checked> 自動再生</label>
+        <label class="opt"><input type="checkbox" checked> 繰り返し</label>
+        <label class="opt"><input type="checkbox"> 音を出す</label>
+      </div>
+    </div>`;
+}
+
+function publish(w) {
+  setScreen('publish', `公開設定: ${w.name}`, `<a class="btn" href="#/works/${w.id}/editor">編集に戻る</a>`);
+  $('view').innerHTML = `
+    <div style="max-width:560px">
+      <h3>公開範囲</h3>
+      <label class="opt"><input type="radio" name="v" ${w.vis === '非公開' ? 'checked' : ''}> <span><b>非公開</b><br><span class="help">自分だけ</span></span></label>
+      <label class="opt"><input type="radio" name="v" ${w.vis === 'パス限定' ? 'checked' : ''}> <span><b>パス限定</b><br><span class="help">共有リンクと公開パスを知っている人</span></span></label>
+      <label class="opt off"><input type="radio" name="v" disabled> <span><b>全体公開</b><br><span class="help">選べません</span></span></label>
+      <p class="help">⚠ 変換中の素材があります</p>
+      <button class="btn primary" disabled>公開する</button>
+    </div>`;
+}
+
+function account() {
+  setScreen('account', 'アカウント');
+  $('view').innerHTML = `
+    <div style="max-width:420px">
+      <label>メールアドレス<input type="text" value="you@example.com" disabled></label>
+      <p></p>
+      <label>表示名<input type="text" placeholder="(未設定)"></label>
+      <p class="help">プラン: フリー (展示ルーム 30 個まで)</p>
+    </div>`;
+}
+
+// ---- 「?」ダイアログ ----
+function openHelp() {
+  const s = SCREENS[current];
+  $('dlg-title').textContent = `使い方ガイド — ${s.name}`;
+  const link = $('guide-link');
+  link.href = guideUrl(`${s.page}.html`);
+  link.textContent = `${s.name}のガイドを開く ↗`;
+  $('tours').innerHTML = s.tours.map((t) => `<span>${esc(t)} (ダミー)</span>`).join('');
+  updatePreview();
+  $('dlg').showModal();
+  $('trouble').focus();
+}
+function promptNow() {
+  const s = SCREENS[current];
+  return appPrompt({ screen: s.name, trouble: $('trouble').value.trim(), pageFile: `${s.page}.md` });
+}
+function updatePreview() { $('preview').textContent = promptNow(); }
+
+$('ais').innerHTML = AIS.map((a) => `<button class="btn primary" data-ai="${a.id}">${a.name} で聞く</button>`).join('')
+  + '<button class="btn" data-ai="copy">文をコピー</button>';
+$('ais').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ai]');
+  if (!b) return;
+  if (!$('trouble').value.trim()) { $('trouble').focus(); $('trouble').placeholder = 'まず困っていることを書いてください'; return; }
+  openInAi(b.dataset.ai, promptNow());
+});
+$('trouble').addEventListener('input', updatePreview);
+$('help').addEventListener('click', openHelp);
+$('dlg-close').addEventListener('click', () => $('dlg').close());
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

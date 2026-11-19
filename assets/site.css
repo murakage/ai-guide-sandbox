@@ -1,0 +1,57 @@
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #656d76; --line: #d8dee4; --soft: #f6f8fa;
+  --accent: #6d4aff; --accent-soft: #efeaff; --code: #eff1f3;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1115; --fg: #e6e6e6; --muted: #9aa4b2; --line: #2d333b; --soft: #161b22;
+          --accent: #a38bff; --accent-soft: #241d3d; --code: #1f242c; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+       background: var(--bg); color: var(--fg); line-height: 1.75; }
+a { color: var(--accent); }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+       padding: 10px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 5; }
+.brand { font-weight: 700; color: var(--fg); text-decoration: none; }
+.brand span { color: var(--muted); font-weight: 400; }
+.toapp { font-size: 14px; }
+.layout { display: flex; max-width: 1100px; margin: 0 auto; }
+.side { width: 220px; flex-shrink: 0; padding: 20px 12px; display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.side a { color: var(--fg); text-decoration: none; padding: 5px 10px; border-radius: 6px; }
+.side a.current { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.side hr { border: 0; border-top: 1px solid var(--line); width: 100%; }
+main { flex: 1; min-width: 0; padding: 16px 28px 60px; }
+.pagebar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+.mdlink { font-size: 13px; color: var(--muted); }
+article h1 { margin-top: 4px; }
+article h2 { border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2em; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: var(--soft); }
+code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+pre { background: var(--code); padding: 12px; border-radius: 8px; overflow-x: auto; }
+pre code { padding: 0; }
+blockquote { margin: 1em 0; padding: 8px 14px; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+
+/* 「AI に聞く」メニュー */
+.askmenu { position: relative; }
+.ask-btn { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px;
+           background: var(--bg); color: var(--fg); cursor: pointer; }
+.ask-btn:hover { border-color: var(--accent); }
+.ask-list { position: absolute; right: 0; top: calc(100% + 6px); width: min(280px, calc(100vw - 32px)); background: var(--bg);
+            border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 6px; z-index: 10; }
+.ask-list button { display: block; width: 100%; text-align: left; font: inherit; background: none; border: 0;
+                   color: var(--fg); padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+.ask-list button:hover:not(:disabled) { background: var(--soft); }
+.ask-list button:disabled { opacity: .45; cursor: default; }
+.ask-list b { display: block; font-size: 14px; }
+.ask-list small { color: var(--muted); font-size: 12px; }
+.ask-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--fg); color: var(--bg);
+             padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 100; max-width: calc(100% - 32px); }
+
+@media (max-width: 720px) {
+  .layout { flex-direction: column; }
+  .side { width: auto; flex-direction: row; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+  .side hr { display: none; }
+  main { padding: 12px 16px 48px; }
+}
