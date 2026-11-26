@@ -100,12 +100,13 @@ const WORKS = [
   { id: 'w2', name: '新作の映像ギャラリー', shape: '横長', vis: 'パス限定' },
   { id: 'w3', name: '下書きの部屋', shape: 'L 字', vis: '非公開' },
 ];
-// 画面 → その画面のガイド。アプリ側が持つ対応表はこれだけ
+// 画面 → その画面のガイドと、関係するページ。アプリ側が持つ対応表はこれだけ
+// (作品一覧に publish を入れていないのは、目次・全文からたどれるかを試すため。本番では入れてよい)
 const SCREENS = {
-  works:   { name: '作品一覧画面',  page: 'works-list',      tours: ['展示ルームを作りたい', '展示ルームを削除したい', 'ゴミ箱から戻したい'] },
-  editor:  { name: '編集画面',      page: 'editor',          tours: ['写真や動画を飾りたい', 'プレビューで確かめたい'] },
-  publish: { name: '公開設定画面',  page: 'publish',         tours: ['パス限定で共有したい', '全体公開したい'] },
-  account: { name: 'アカウント画面', page: 'getting-started', tours: ['表示名を決めたい'] },
+  works:   { name: '作品一覧画面',  page: 'works-list',      related: ['troubleshooting'], tours: ['展示ルームを作りたい', '展示ルームを削除したい', 'ゴミ箱から戻したい'] },
+  editor:  { name: '編集画面',      page: 'editor',          related: ['troubleshooting'], tours: ['写真や動画を飾りたい', 'プレビューで確かめたい'] },
+  publish: { name: '公開設定画面',  page: 'publish',         related: ['troubleshooting', 'terminology'], tours: ['パス限定で共有したい', '全体公開したい'] },
+  account: { name: 'アカウント画面', page: 'getting-started', related: ['publish'], tours: ['表示名を決めたい'] },
 };
 
 const $ = (id) => document.getElementById(id);
@@ -211,7 +212,7 @@ function openHelp() {
 }
 function promptNow() {
   const s = SCREENS[current];
-  return appPrompt({ screen: s.name, trouble: $('trouble').value.trim(), pageFile: `${s.page}.md` });
+  return appPrompt({ screen: s.name, trouble: $('trouble').value.trim(), pageFile: `${s.page}.md`, related: s.related.map((r) => `${r}.md`) });
 }
 function updatePreview() { $('preview').textContent = promptNow(); }
 

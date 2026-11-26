@@ -22,21 +22,31 @@ export const guideUrl = (file) => new URL(file, guideRoot()).href;
 export function pagePrompt(mdUrl) {
   return [
     `${mdUrl} を読んで、「ハコニワ Studio」の使い方について質問に答えられるようにしてください。`,
-    `ほかのページが必要なら ${guideUrl('llms.txt')} の目次から探してください。`,
+    ...fallbackLines(),
     RULES,
   ].join('\n');
 }
 
-// ② アプリから: 今いる画面と困りごとを添えて、答えてもらう
-export function appPrompt({ screen, trouble, pageFile }) {
+// 見つからなかったときの段。AI によっては目次 (llms.txt) の中のリンクを開けないので、
+// 全文 (llms-full.txt) の URL も質問文に直接書いておく
+function fallbackLines() {
+  return [
+    `ほかのページが必要なら、ガイド全体の目次 ${guideUrl('llms.txt')} から探してください。`,
+    `目次からページを開けないときや、それでも見つからないときは、全文 ${guideUrl('llms-full.txt')} を読んでください。`,
+  ];
+}
+
+// ② アプリから: 今いる画面と困りごとを添えて、答えてもらう。
+// 近いものから順に URL を渡す: この画面のページ → 関係するページ → 目次 → 全文
+export function appPrompt({ screen, trouble, pageFile, related = [] }) {
   return [
     `「ハコニワ Studio」を使っています。今は「${screen}」です。`,
     `困っていること: ${trouble || '(ここに困っていることを書いてください)'}`,
     '',
-    '次の使い方ガイドを読んで答えてください。',
+    'Web 検索より先に、次の使い方ガイドを上から順に読んで答えてください。',
     `- この画面のガイド: ${guideUrl(pageFile)}`,
-    `- よくあるつまずき: ${guideUrl('troubleshooting.md')}`,
-    `- ガイド全体の目次: ${guideUrl('llms.txt')}`,
+    ...related.map((f) => `- 関係するページ: ${guideUrl(f)}`),
+    ...fallbackLines(),
     RULES,
   ].join('\n');
 }
