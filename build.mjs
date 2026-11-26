@@ -1,6 +1,7 @@
 // content/*.md (情報源) から公開用のサイトを public/ に作る。依存なし。
 //   node build.mjs                       … ローカル確認用 (llms.txt の URL が http://localhost:8090/ になる)
 //   node build.mjs --base https://<ユーザー>.github.io/<リポジトリ>/   … 公開用
+//   node build.mjs --content content-big --out public/big --base <公開の URL>/big/   … 10 倍版 (原稿は gen-big.mjs が作る)
 //
 // 作るもの:
 //   public/<ページ>.html   人が読むページ (右上に「AI に聞く」メニュー)
@@ -13,20 +14,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
-const OUT = path.join(ROOT, 'public');
-const baseArg = process.argv.indexOf('--base');
-const BASE = (baseArg > 0 ? process.argv[baseArg + 1] : 'http://localhost:8090/').replace(/\/?$/, '/');
+const arg = (name, def) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : def; };
+const CONTENT = path.join(ROOT, arg('--content', 'content'));
+const OUT = path.join(ROOT, arg('--out', 'public'));
+const BASE = arg('--base', 'http://localhost:8090/').replace(/\/?$/, '/');
 
 const SITE = {
   name: 'ハコニワ Studio',
   summary: '写真や動画を飾った「展示ルーム」を作って Web で公開するツールの利用者ガイド (AI 経由の案内を試すための架空のアプリ)。',
 };
-// サイドバーと llms.txt に並べる順番
-const ORDER = ['index', 'getting-started', 'works-list', 'editor', 'publish', 'troubleshooting', 'terminology'];
+// サイドバーと llms.txt に並べる順番。原稿のフォルダに order.json があればそれを使う (10 倍版)
+const ORDER_FILE = path.join(CONTENT, 'order.json');
+const ORDER = fs.existsSync(ORDER_FILE)
+  ? JSON.parse(fs.readFileSync(ORDER_FILE, 'utf8'))
+  : ['index', 'getting-started', 'works-list', 'editor', 'publish', 'troubleshooting', 'terminology'];
 
 // ---------- 情報源を読む ----------
 function readPage(slug) {
-  const raw = fs.readFileSync(path.join(ROOT, 'content', `${slug}.md`), 'utf8').replace(/\r\n/g, '\n');
+  const raw = fs.readFileSync(path.join(CONTENT, `${slug}.md`), 'utf8').replace(/\r\n/g, '\n');
   const m = raw.match(/^---\n([\s\S]*?)\n---\n/);
   const meta = {};
   if (m) for (const line of m[1].split('\n')) { const i = line.indexOf(':'); if (i > 0) meta[line.slice(0, i).trim()] = line.slice(i + 1).trim(); }

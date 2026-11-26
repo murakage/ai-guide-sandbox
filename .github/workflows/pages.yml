@@ -26,6 +26,9 @@ jobs:
         uses: actions/configure-pages@v5
       # llms.txt などに書く URL を、公開先の URL にする
       - run: node build.mjs --base "${{ steps.pages.outputs.base_url }}/"
+      # 10 倍版 (全文 約 2.35 MB) を /big/ に作る。原稿は毎回ここで作り直す
+      - run: node gen-big.mjs
+      - run: node build.mjs --content content-big --out public/big --base "${{ steps.pages.outputs.base_url }}/big/"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
